@@ -1,6 +1,6 @@
-const express = require("express");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -14,4 +14,4 @@ app.get("/", (req, res) => {
     res.send("Hello World");
 });
 
-module.exports = app;
+export { app };
