@@ -492,7 +492,84 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 
+const getUserProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params;
 
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username is required");
+    }
+
+    const profile = await User.aggregate([
+        {
+            $match: {
+                username: username.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "followers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "following"
+            }
+        },
+        {
+            $addFields: {
+                follwersCount: {
+                    $size: "$followers"
+                },
+                followingCount: {
+                    $size: "$following"
+                },
+                isFollowing: {
+                    $cond: {
+                        if: {
+                            $in: [
+                                req.user?._id,
+                                "$followers.subscriber"
+                            ]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1,
+                followersCount: 1,
+                followingCount: 1,
+                isFollowing: 1
+            }
+        }
+    ]);
+
+    if (!profile.length) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            profile[0],
+            "User profile fetched successfully"
+        )
+    );
+
+});
 
 
 export { 
@@ -506,4 +583,5 @@ export {
     changeCurrentPassword,
     updateUserAvatar,
     updateUserCoverImage,
+    getUserProfile,
 };

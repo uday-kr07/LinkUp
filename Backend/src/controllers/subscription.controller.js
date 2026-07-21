@@ -22,6 +22,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     // Check if the user exists
     const channel = await User.findById(channelId);
 
+    
     if (!channel) {
         throw new ApiError(404, "User not found");
     }
@@ -63,6 +64,58 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 });
 
+
+const getSubscribedChannels = asyncHandler(async (req, res) => {
+    const { subscriberId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(subscriberId)) {
+        throw new ApiError(400, "Invalid user id");
+    }
+
+    const subscribedChannels = await Subscription.find({
+        subscriber: subscriberId,
+    }).populate({
+        path: "channel",
+        select: "username fullName avatar coverImage",
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            subscribedChannels,
+            "Following fetched successfully"
+        )
+    );
+
+});
+
+
+const getUserChannelSubscribers = asyncHandler(async (req, res) => {
+    const { channelId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(channelId)) {
+        throw new ApiError(400, "Invalid channel id");
+    }
+
+    const subscribers = await Subscription.find({
+        channel: channelId,
+    }).populate({
+        path: "subscriber",
+        select: "username fullName avatar coverImage",
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            subscribers,
+            "Followers fetched successfully"
+        )
+    );
+});
+
+
 export {
-    toggleSubscription
+    toggleSubscription,
+    getSubscribedChannels,
+    getUserChannelSubscribers
 };
