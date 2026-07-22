@@ -2,6 +2,7 @@ import { Router } from "express";
 import { upload } from "../middleware/multer.middleware.js";
 import { 
     registerUser,
+    googleLogin,
     loginUser,
     logoutUser,
     refreshAccessToken,
@@ -35,6 +36,7 @@ router.route("/register").post(
 router.route("/login").post(loginUser)
 
 //secured routes
+router.route("/google-login").post(googleLogin);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/current-user").post(verifyJWT, getCurrentUser);

@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { User } from "../models/user.model.js";
+import { client } from "../utils/googleAuth.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -149,6 +151,87 @@ const registerUser =  asyncHandler( async (req, res) => {
             "User registered successfully"
         )
     );
+});
+
+
+const googleLogin = asyncHandler(async (req, res) => {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+        throw new ApiError(400, "ID token is required");
+    }
+
+    //Verify Google token
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+        throw new ApiError(401, "Invalid ID token");
+    }
+
+    const {
+        sub: googleId,
+        email,
+        name,
+        picture,
+        email_verified,
+    } = payload;
+
+    if (!email_verified) {
+        throw new ApiError(401, "Google email is not verified");
+    }
+
+     // Check if user already exists
+    let user = await User.findOne({ email });
+
+     // Create user if it doesn't exist
+    if (!user) {
+        user = await User.create({
+            username: email.split("@")[0],
+            email,
+            fullName: name,
+            avatar: picture,
+            googleId,
+            authProvider: "google",
+            password: crypto.randomBytes(), // dummy password
+        })
+    }
+
+    // Generate your existing JWTs
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    const loogedInUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+    },
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken
+            },
+            "Google Login successful"
+        )
+    )
+
 });
 
 
@@ -576,6 +659,7 @@ export {
     generateAccessAndRefreshTokens,
     registerUser,
     loginUser,
+    googleLogin,
     logoutUser,
     refreshAccessToken,
     getCurrentUser,

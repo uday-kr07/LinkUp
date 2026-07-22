@@ -14,6 +14,16 @@ const userSchema = new Schema(
             maxlength: 30,
             index: true
         },
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true,            
+        },
+        authProvider: {
+            type: String,
+            enum: ["local", "google"],
+            default: "local",
+        },
         email: {
             type: String,
             required: true,
