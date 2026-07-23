@@ -155,6 +155,8 @@ const registerUser =  asyncHandler( async (req, res) => {
 
 
 const googleLogin = asyncHandler(async (req, res) => {
+    console.log("Request body:", req.body);
+
     const { idToken } = req.body;
 
     if (!idToken) {
@@ -168,6 +170,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     });
 
     const payload = ticket.getPayload();
+    console.log("Google payload:", payload);
 
     if (!payload) {
         throw new ApiError(401, "Invalid ID token");
@@ -187,6 +190,7 @@ const googleLogin = asyncHandler(async (req, res) => {
 
      // Check if user already exists
     let user = await User.findOne({ email });
+    console.log("Existing user:", user);
 
      // Create user if it doesn't exist
     if (!user) {
@@ -197,7 +201,7 @@ const googleLogin = asyncHandler(async (req, res) => {
             avatar: picture,
             googleId,
             authProvider: "google",
-            password: crypto.randomBytes(), // dummy password
+            password: crypto.randomBytes(32).toString("hex"), // dummy password
         })
     }
 
@@ -207,14 +211,14 @@ const googleLogin = asyncHandler(async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
-    const loogedInUser = await User.findById(user._id).select(
+    const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
 
     const options = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-    },
+    }
 
     return res
     .status(200)
