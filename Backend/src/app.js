@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import postRouter from "./routes/post.routes.js";
+import reelRouter from "./routes/reel.routes.js";
 import subscriptionRouter from "./routes/subscription.routes.js";
+import userRouter from "./routes/user.routes.js";
+import postRouter from "./routes/post.routes.js";
 
 
 const app = express();
@@ -18,11 +22,11 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
+app.use("/api/v1/posts", postRouter);
+app.use("/api/v1/reels", reelRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
+app.use("/api/v1/posts", postRouter);
 
-
-// Routes import
-import userRouter from "./routes/user.routes.js";
 
 app.use("/api/v1/users", userRouter);
 
