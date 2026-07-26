@@ -45,5 +45,6 @@ router.route("/change-password").patch(verifyJWT, changeCurrentPassword);
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 router.route("/coverImage").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 router.route("/profile/:username").get(verifyJWT, getUserProfile);
+//router.route("/search").get(verifyJWT, searchUsers);
 
 export default router ;
