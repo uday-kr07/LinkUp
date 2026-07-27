@@ -659,6 +659,89 @@ const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 
+const searchUsers = asyncHandler(async (req, res) => {
+    const {
+        query,
+        page = 1,
+        limit = 20,
+    } = req.query;
+
+    if (!query?.trim()) {
+        throw new ApiError(400, "Search query is required");
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const users = await User.find({
+        $and: [
+            {
+                $or: [
+                    {
+                        username: {
+                            $regex: query,
+                            $options: "i",
+                        },
+                    },
+                    {
+                        fullName: {
+                            $regex: query,
+                            $options: "i",
+                        },
+                    },
+                ],
+            },
+            {
+                _id: {
+                    $ne: req.user._id,
+                },
+            },
+        ],
+    })
+        .select("-password -refreshToken -email")
+        .skip(skip)
+        .limit(Number(limit));
+
+    const totalUsers = await User.countDocuments({
+        $and: [
+            {
+                $or: [
+                    {
+                        username: {
+                            $regex: query,
+                            $options: "i",
+                        },
+                    },
+                    {
+                        fullName: {
+                            $regex: query,
+                            $options: "i",
+                        },
+                    },
+                ],
+            },
+            {
+                _id: {
+                    $ne: req.user._id,
+                },
+            },
+        ],
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                users,
+                page: Number(page),
+                totalPage: Math.ceil(totalUsers / Number(limit)),
+            },
+            "Users fetched successfully"
+        )
+    );
+});
+
+
+
 export { 
     generateAccessAndRefreshTokens,
     registerUser,
@@ -672,4 +755,5 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserProfile,
+    searchUsers,
 };
