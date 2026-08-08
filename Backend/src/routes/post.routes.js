@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import {
     createPost,
-    //getFeed,
+    getFeed,
     //getPostById,
     //updatePost,
     //deletePost,
@@ -19,7 +19,7 @@ router
         upload.array("media", 10),
         createPost
     )
-    //.get(getFeed);
+    .get(getFeed);
 
 router
     .route("/:postId")

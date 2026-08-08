@@ -70,4 +70,8 @@ const createPost = asyncHandler(async (req, res) => {
     );
 });
 
-export { createPost };
+const getFeed = asyncHandler(async (req, res) => {
+
+})
+
+export { createPost, getFeed };
