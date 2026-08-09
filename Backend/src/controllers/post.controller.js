@@ -71,7 +71,46 @@ const createPost = asyncHandler(async (req, res) => {
 });
 
 const getFeed = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
 
-})
+    if (!userId) {
+        throw new ApiError(401, "Unauthorized request");
+    }
+        const page = Math.max(Number(req.query.page) || 1, 1);
+        const limit = Math.min(Number(req.query.limit) || 20, 50);
+
+        const skip = (page - 1) * limit;
+
+        const filter = {
+        $or: [
+            { visibility: "public" },
+            { owner: userId }
+        ]
+    };
+
+    const [posts, totalPosts] = await Promise.all([
+        Post.find(filter)
+            .populate("owner", "username fullName avatar")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+
+        Post.countDocuments(filter)
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                posts,
+                page,
+                limit,
+                totalPosts,
+                totalPages: Math.ceil(totalPosts / limit)
+            },
+            "Feed fetched successfully"
+        )
+    )
+});
 
 export { createPost, getFeed };
