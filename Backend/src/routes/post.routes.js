@@ -3,7 +3,7 @@ import { verifyJWT } from "../middleware/auth.middleware.js";
 import {
     createPost,
     getFeed,
-    //getPostById,
+    getUserPosts,
     //updatePost,
     //deletePost,
 } from "../controllers/post.controller.js";
@@ -22,8 +22,8 @@ router
     .get(getFeed);
 
 router
-    .route("/:postId")
-    //.get(getPostById)
+    .route("/user/:userId")
+    .get(getUserPosts);
     //.patch(updatePost)
     //.delete(deletePost);
 
