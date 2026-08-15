@@ -70,6 +70,7 @@ const createPost = asyncHandler(async (req, res) => {
     );
 });
 
+
 const getFeed = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
 
@@ -113,6 +114,7 @@ const getFeed = asyncHandler(async (req, res) => {
     )
 });
 
+
 const getUserPosts = asyncHandler(async (req, res) => {
     const { userId } = req.params;
 
@@ -155,8 +157,87 @@ const getUserPosts = asyncHandler(async (req, res) => {
 
 })
 
+
+const getPostById = asyncHandler(asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    if (!postId) {
+        throw new ApiError(400, "Post Id is required");
+    }
+
+    const post = await Post.findById(postId)
+    .populate("owner", "username fullName avatar");
+
+    if (!post) {
+        throw new ApiError(404, "Post not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            post,
+            "post fetched successfully"
+        )
+    );
+}))
+
+
+const updatePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { title, caption, visibility } = req.body;
+
+    if (!postId) {
+        throw new ApiError(400, "Post Id is required");
+    }
+
+// Find the post
+const post = await Post.findById(postId);
+
+if (!post) {
+    throw new ApiError(404, "Post not found");
+}
+
+// Check ownereship
+if (post.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to update this post");
+}
+
+// Update only provided fields
+if (title !== undefined) {
+    post.title = title;
+}
+
+if (caption !==  undefined) {
+    post.caption = caption;
+}
+
+if (visibility !== undefined) {
+    if (!["public", "private"].includes(visibility)) {
+        throw new ApiError(400, "Invalid visibility value");
+    }
+
+    post.visibility = visibility;
+}
+
+await post.save();
+
+const updatedPost = await Post.findById(postId)
+    .populate("owner", "username fullName avatar");
+
+return res.status(200).json(
+    new ApiResponse(
+        200,
+        updatedPost,
+        "Post updated successfully"
+        )
+    )
+})
+
+
 export { 
     createPost, 
     getFeed, 
     getUserPosts,
+    getPostById,
+    updatePost
 };

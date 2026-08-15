@@ -3,8 +3,8 @@ import { verifyJWT } from "../middleware/auth.middleware.js";
 import {
     createPost,
     getFeed,
-    getUserPosts,
-    //updatePost,
+    getPostById,
+    updatePost
     //deletePost,
 } from "../controllers/post.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -23,8 +23,13 @@ router
 
 router
     .route("/user/:userId")
-    .get(getUserPosts);
+    .get(getPostById);
     //.patch(updatePost)
     //.delete(deletePost);
+
+router
+    .route("/:postId")
+    .get(getPostById)
+    .patch(updatePost)
 
 export default router;
