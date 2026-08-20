@@ -2,7 +2,8 @@ import { Post } from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnImageKit } from "../utils/imagekit.js"; 
+import imagekit, { uploadOnImageKit } from "../utils/imagekit.js"; 
+
 
 const createPost = asyncHandler(async (req, res) => {
     const { title, caption, visibility } = req.body;
@@ -234,10 +235,54 @@ return res.status(200).json(
 })
 
 
+const deletePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    if (!postId) {
+        throw new ApiErrror(400, "Post Id is required");
+    }
+
+    //Find the post
+    const post = await Post.findById(postId);
+
+    if (!post) {
+        throw new ApiError(400, "Post not found");
+    }
+
+    // Check ownership
+    if (post.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this post");
+    }
+
+    //Delete media from Imagekit
+    for (const media of post.media) {
+        if (media.fileId) {
+            try {
+                await imagekit.deleteFile(media.filesId);
+            } catch (error) {
+                console.error("Error deleting file from Imagekit:", error);
+            };
+        }
+    }
+
+    // Delete post from MongoDb
+    await Post.findByIdAndDelete(postId);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            null,
+            "Post deleted successfully"
+        )
+    )
+})
+
+
 export { 
     createPost, 
     getFeed, 
     getUserPosts,
     getPostById,
-    updatePost
+    updatePost,
+    deletePost,
 };

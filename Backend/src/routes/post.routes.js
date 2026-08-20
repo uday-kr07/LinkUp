@@ -4,8 +4,8 @@ import {
     createPost,
     getFeed,
     getPostById,
-    updatePost
-    //deletePost,
+    updatePost,
+    deletePost,
 } from "../controllers/post.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 
@@ -25,11 +25,11 @@ router
     .route("/user/:userId")
     .get(getPostById);
     //.patch(updatePost)
-    //.delete(deletePost);
 
 router
     .route("/:postId")
     .get(getPostById)
     .patch(updatePost)
+    .delete(deletePost);
 
 export default router;
